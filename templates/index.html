@@ -1,0 +1,16 @@
+<!doctype html>
+<title>CalDining Menu Information</title>
+<h1>Today's Menus</h1>
+<table border="1">
+{% for dc in dcDict %}
+    <td width="150" align="center"><h3>{{ dc }}</h3></td>
+    {% for meal in dcDict[dc] %}
+        <td width="100" align="center">
+        <a href="{{ dc }}/{{ meal }}">{{ meal }}</d1></a> <!-- TODO: fix href -->
+        </td>
+    {% endfor %}
+    </tr>
+{% else %}
+    <d1>No data gg</d1>
+{% endfor %}
+</table>

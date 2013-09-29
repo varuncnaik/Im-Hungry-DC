@@ -17,11 +17,12 @@ DC_DICTIONARY = OrderedDict([
     ('CKC', '04'),
     ('Foothill', '06'),
 ])
+MEAL_LIST = ['Breakfast', 'Brunch', 'Lunch', 'Dinner']
 VEGETARIAN_COLORS = {
     '#800040': 'Vegan',
     '#008000': 'Vegetarian',
 }
-KEY_INGREDIENTS_LIST = ['beef', 'pork', 'ham']
+KEY_INGREDIENTS_LIST = ['Beef', 'Pork', 'Ham']
 
 LABEL_URL_FORMAT = 'http://services.housing.berkeley.edu/FoodPro/dining/static/label.asp?RecNumAndPort={0}'
 DC_URL_FORMAT = 'http://services.housing.berkeley.edu/FoodPro/dining/static/DiningMenus.asp?dtCurDate={0}/{1}/{2}&strCurLocation={3}'
@@ -97,18 +98,56 @@ def _getTextForLabel(soup, s):
     b.extract()
     return font.text.strip()
 
+def getLabelUrl(labelId):
+    """
+    Return the full url of the label page with the specified labelId.
+    """
+    return LABEL_URL_FORMAT.format(labelId)
+
 def scrapeLabel(labelId):
     """
     Scrapes the information from the label page.
     """
-    soup = BeautifulSoup(urlopen(LABEL_URL_FORMAT.format(labelId)))
+    soup = BeautifulSoup(urlopen(getLabelUrl(labelId)))
     return [_getTextForLabel(soup, 'ALLERGENS'), _getTextForLabel(soup, \
         'INGREDIENTS')]
+
+def _parse(tokenGenerator, results, stack=[]):
+    accum = []
+    while True:
+        try:
+            token = tokenGenerator.next()
+        except StopIteration:
+            token = ')'
+        if token in ',()':
+            accumStr = ' '.join(accum).title()
+            for ing in KEY_INGREDIENTS_LIST:
+                if ing in accumStr:
+                    results += [[i for i in stack + [accumStr]]]
+                    break
+            if token == '(':
+                stack.append(accumStr)
+                _parse(tokenGenerator, results, stack)
+                stack.pop()
+            elif token == ')':
+                return
+            accum = []
+        else:
+            accum += [token]
 
 def getKeyIngredients(ingredients):
     """
     Returns which elements in KEY_INGREDIENTS_LIST appear in ingredients.
     """
+    ingredients = re.sub(r'([,\(\)])', r' \g<1> ', ingredients)
+    results = []
+    _parse((s for s in ingredients.split()), results)
+    return results
+
+'''def getKeyIngredients(ingredients):
+    """
+    Returns which elements in KEY_INGREDIENTS_LIST appear in ingredients.
+    """
     ingredients = ingredients.lower()
     return [_titlecase(ing) for ing in KEY_INGREDIENTS_LIST if ing in \
-        re.split(r'[^\w]', ingredients)]
+        re.split(r'[^\w]', ingredients)]'''

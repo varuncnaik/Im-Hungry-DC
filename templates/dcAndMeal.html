@@ -8,9 +8,14 @@
     {% for value in stations[station] %}
         <tr>
         <td width="200"><a href="{{ value.url }}">{{ value.dish }}</a></td>
-        <td width="90">{{ value.vegetarian }}</td>
-        <td width="110">{{ value.allergens }}</td>
-        <td width="110">{{ value.ingredients }}</td>
+        <td width="100">{{ value.vegetarian }}</td>
+        <td width="150">{{ value.allergens }}</td>
+        <td width="500">
+            {% for ing in value.ingredients %}
+                {{ ing }}
+                <br>
+            {% endfor %}
+        </td>
         </tr>
     {% endfor %}
     </table>

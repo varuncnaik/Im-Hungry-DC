@@ -9,7 +9,7 @@ import sqlite3
 from collections import OrderedDict
 from contextlib import closing
 from flask import Flask, g, render_template
-from scrapeUtils import getDate, getDateStr, scrapeDC, scrapeLabel, getKeyIngredients, DC_DICTIONARY, LABEL_URL_FORMAT
+from scrapeUtils import getDate, getDateStr, scrapeDC, getLabelUrl, scrapeLabel, getKeyIngredients, DC_DICTIONARY, MEAL_LIST
 
 # Configuration
 DATABASE = 'C:/Users/varunnaik/Desktop/asdf/tmp/caldining.db'
@@ -60,12 +60,16 @@ def index():
     """
     The 'home page' view of the app.
     """
-    dcDict = OrderedDict([(dc, []) for dc in DC_DICTIONARY])
+    dcDict = OrderedDict([(dc, set()) for dc in DC_DICTIONARY])
     cur = g.db.execute('SELECT DISTINCT dc, meal FROM Items ' \
                        "WHERE date1 IS '{0}' " \
                        'GROUP BY dc, meal'.format(TODAY_STR))
     for dc, meal in cur.fetchall():
-        dcDict[dc] += [meal] # TODO: sort these
+        if meal == 'Lunch/Brunch':
+            meal = 'Brunch'
+        dcDict[dc].add(meal)
+    for dc in dcDict:
+        dcDict[dc] = [meal for meal in dcDict[dc] if meal in MEAL_LIST]
     return render_template('index.html', dcDict=dcDict)
 
 @app.route('/refresh/')
@@ -82,8 +86,11 @@ def refresh():
         # TODO: prevent SQL injection here lol
         for value in myList:
             labelId = value[-1]
-            if (value[0], value[1], value[2], labelId) in fetched1:
-                fetched1.remove((value[0], value[1], value[2], labelId))
+            if value[1] == 'Lunch/Brunch':
+                value[1] = 'Brunch'
+            t = (value[0], value[1], value[2], labelId)
+            if t in fetched1:
+                fetched1.remove(t)
             else:
                 g.db.execute('INSERT INTO Items (date1, dc, meal, station, ' \
                              'dish, vegetarian, label) VALUES ' \
@@ -99,11 +106,10 @@ def refresh():
                     g.db.execute('INSERT INTO Labels (id, allergens, ' \
                                  'ingredients) VALUES (?, ?, ?)', \
                                  [labelId] + label)
-    for _, _, label in fetched1:
+    for _, _, _, label in fetched1:
         g.db.execute('DELETE FROM Items ' \
                      "WHERE date1='{0}' " \
                      "AND label='{1}'".format(TODAY_STR, label))
-#    g.db.execute("DELETE FROM Items WHERE date1='{0}'".format(TODAY_STR))
     g.db.commit()
     return 'Refreshed table'
 
@@ -129,8 +135,8 @@ def dcAndMeal(dc, meal):
             raise Exception('Label ID not found')
         value['vegetarian'] = vegetarian
         value['allergens'] = fetched[0][0]
-        value['ingredients'] = ', '.join(getKeyIngredients(fetched[0][1]))
-        value['url'] = LABEL_URL_FORMAT.format(labelId)
+        value['ingredients'] = [' > '.join(l) for l in getKeyIngredients(fetched[0][1])]
+        value['url'] = getLabelUrl(labelId)
         if station not in stations:
             stations[station] = [value]
         else:

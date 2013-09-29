@@ -21,6 +21,8 @@ VEGETARIAN_COLORS = {
     '#800040': 'Vegan',
     '#008000': 'Vegetarian',
 }
+KEY_INGREDIENTS_LIST = ['beef', 'pork', 'ham']
+
 LABEL_URL_FORMAT = 'http://services.housing.berkeley.edu/FoodPro/dining/static/label.asp?RecNumAndPort={0}'
 DC_URL_FORMAT = 'http://services.housing.berkeley.edu/FoodPro/dining/static/DiningMenus.asp?dtCurDate={0}/{1}/{2}&strCurLocation={3}'
 TABLE_WIDTH = 670
@@ -102,3 +104,11 @@ def scrapeLabel(labelId):
     soup = BeautifulSoup(urlopen(LABEL_URL_FORMAT.format(labelId)))
     return [_getTextForLabel(soup, 'ALLERGENS'), _getTextForLabel(soup, \
         'INGREDIENTS')]
+
+def getKeyIngredients(ingredients):
+    """
+    Returns which elements in KEY_INGREDIENTS_LIST appear in ingredients.
+    """
+    ingredients = ingredients.lower()
+    return [_titlecase(ing) for ing in KEY_INGREDIENTS_LIST if ing in \
+        re.split(r'[^\w]', ingredients)]

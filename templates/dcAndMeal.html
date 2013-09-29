@@ -4,13 +4,13 @@
 {% for station in stations %}
     <h3>{{ station }}</h3>
     <table border="1">
-    <tr><th>Food</th><th>Type</th><th>Allergens</th><th>Ingredients</th></tr>
+    <tr><th>Food</th><th>Meat Status</th><th>Allergens</th><th>Key Ingredients</th></tr>
     {% for value in stations[station] %}
         <tr>
         <td width="200"><a href="{{ value.url }}">{{ value.dish }}</a></td>
-        <td width="60">{{ value.vegetarian }}</td>
-        <td width="90">{{ value.allergens }}</td>
-        <td>{{ value.ingredients }}</td>
+        <td width="90">{{ value.vegetarian }}</td>
+        <td width="110">{{ value.allergens }}</td>
+        <td width="110">{{ value.ingredients }}</td>
         </tr>
     {% endfor %}
     </table>

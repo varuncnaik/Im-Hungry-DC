@@ -9,7 +9,7 @@ import sqlite3
 from collections import OrderedDict
 from contextlib import closing
 from flask import Flask, g, render_template
-from scrapeUtils import getDate, getDateStr, scrapeDC, scrapeLabel, DC_DICTIONARY, LABEL_URL_FORMAT
+from scrapeUtils import getDate, getDateStr, scrapeDC, scrapeLabel, getKeyIngredients, DC_DICTIONARY, LABEL_URL_FORMAT
 
 # Configuration
 DATABASE = 'C:/Users/varunnaik/Desktop/asdf/tmp/caldining.db'
@@ -128,7 +128,8 @@ def dcAndMeal(dc, meal):
         if len(fetched) == 0:
             raise Exception('Label ID not found')
         value['vegetarian'] = vegetarian
-        value['allergens'], value['ingredients'] = fetched[0]
+        value['allergens'] = fetched[0][0]
+        value['ingredients'] = ', '.join(getKeyIngredients(fetched[0][1]))
         value['url'] = LABEL_URL_FORMAT.format(labelId)
         if station not in stations:
             stations[station] = [value]

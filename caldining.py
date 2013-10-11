@@ -12,11 +12,8 @@ from flask import Flask, g, render_template
 from scrapeUtils import getDate, getDateStr, scrapeDC, getLabelUrl, scrapeLabel, getKeyIngredients, DC_DICTIONARY, MEAL_LIST
 
 # Configuration
-DATABASE = 'C:/Users/varunnaik/Desktop/asdf/tmp/caldining.db'
+DATABASE = 'tmp/caldining.db'
 DEBUG = True       # TODO: change this
-SECRET_KEY = 'development key'
-USERNAME = 'admin'
-PASSWORD = 'default'
 
 TODAY = getDate()  # TODO: change this
 TODAY_STR = getDateStr(TODAY)
@@ -65,11 +62,9 @@ def index():
                        "WHERE date1 IS '{0}' " \
                        'GROUP BY dc, meal'.format(TODAY_STR))
     for dc, meal in cur.fetchall():
-        if meal == 'Lunch/Brunch':
-            meal = 'Brunch'
         dcDict[dc].add(meal)
     for dc in dcDict:
-        dcDict[dc] = [meal for meal in dcDict[dc] if meal in MEAL_LIST]
+        dcDict[dc] = [m if m in dcDict[dc] else '' for m in MEAL_LIST]
     return render_template('index.html', dcDict=dcDict)
 
 @app.route('/refresh/')
@@ -83,6 +78,8 @@ def refresh():
     fetched1 = {tuple(value) for value in cur1.fetchall()}
     for dc in DC_DICTIONARY:
         myList = scrapeDC(TODAY, dc)
+        if myList is None:
+            return 'Unable to connect to the website'
         # TODO: prevent SQL injection here lol
         for value in myList:
             labelId = value[-1]
@@ -113,7 +110,7 @@ def refresh():
     g.db.commit()
     return 'Refreshed table'
 
-@app.route('/<dc>/<meal>')
+@app.route('/menus/<dc>/<meal>/')
 def dcAndMeal(dc, meal):
     """
     View to display a single meal for a single dining common.

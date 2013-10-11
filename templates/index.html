@@ -6,11 +6,11 @@
     <td width="150" align="center"><h3>{{ dc }}</h3></td>
     {% for meal in dcDict[dc] %}
         <td width="100" align="center">
-        <a href="{{ dc }}/{{ meal }}">{{ meal }}</d1></a> <!-- TODO: fix href -->
+        <a href="menus/{{ dc }}/{{ meal }}/">{{ meal }}</d1></a>
         </td>
     {% endfor %}
     </tr>
-{% else %}
-    <d1>No data gg</d1>
 {% endfor %}
 </table>
+<br>
+To refresh the data, go <a href="/refresh/">here</a>.

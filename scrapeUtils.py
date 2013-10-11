@@ -9,7 +9,8 @@ import datetime
 import re
 from bs4 import BeautifulSoup
 from collections import OrderedDict
-from urllib2 import urlopen
+from urllib2 import urlopen, URLError
+from ingredients import KEY_INGREDIENTS
 
 DC_DICTIONARY = OrderedDict([
     ('Crossroads', '01'),
@@ -22,7 +23,6 @@ VEGETARIAN_COLORS = {
     '#800040': 'Vegan',
     '#008000': 'Vegetarian',
 }
-KEY_INGREDIENTS_LIST = ['Beef', 'Pork', 'Ham']
 
 LABEL_URL_FORMAT = 'http://services.housing.berkeley.edu/FoodPro/dining/static/label.asp?RecNumAndPort={0}'
 DC_URL_FORMAT = 'http://services.housing.berkeley.edu/FoodPro/dining/static/DiningMenus.asp?dtCurDate={0}/{1}/{2}&strCurLocation={3}'
@@ -65,7 +65,10 @@ def scrapeDC(date, dc):
     myList = []
     strLocation = DC_DICTIONARY[dc]
     url = DC_URL_FORMAT.format(date.month, date.day, date.year, strLocation)
-    soup = BeautifulSoup(urlopen(url))
+    try:
+        soup = BeautifulSoup(urlopen(url))
+    except URLError:
+        return None
     table = soup.find('table', width=TABLE_WIDTH)
     trList = table.find_all('tr', recursive=False)
     fontList = trList[0].find_all('font')
@@ -121,7 +124,7 @@ def _parse(tokenGenerator, results, stack=[]):
             token = ')'
         if token in ',()':
             accumStr = ' '.join(accum).title()
-            for ing in KEY_INGREDIENTS_LIST:
+            for ing in KEY_INGREDIENTS:
                 if ing in accumStr:
                     results += [[i for i in stack + [accumStr]]]
                     break
@@ -137,17 +140,9 @@ def _parse(tokenGenerator, results, stack=[]):
 
 def getKeyIngredients(ingredients):
     """
-    Returns which elements in KEY_INGREDIENTS_LIST appear in ingredients.
+    Returns which elements in KEY_INGREDIENTS appear in ingredients.
     """
     ingredients = re.sub(r'([,\(\)])', r' \g<1> ', ingredients)
     results = []
     _parse((s for s in ingredients.split()), results)
     return results
-
-'''def getKeyIngredients(ingredients):
-    """
-    Returns which elements in KEY_INGREDIENTS_LIST appear in ingredients.
-    """
-    ingredients = ingredients.lower()
-    return [_titlecase(ing) for ing in KEY_INGREDIENTS_LIST if ing in \
-        re.split(r'[^\w]', ingredients)]'''

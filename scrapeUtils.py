@@ -111,7 +111,10 @@ def scrapeLabel(labelId):
     """
     Scrapes the information from the label page.
     """
-    soup = BeautifulSoup(urlopen(getLabelUrl(labelId)))
+    try:
+        soup = BeautifulSoup(urlopen(getLabelUrl(labelId)))
+    except URLError:
+        return None
     return [_getTextForLabel(soup, 'ALLERGENS'), _getTextForLabel(soup, \
         'INGREDIENTS')]
 

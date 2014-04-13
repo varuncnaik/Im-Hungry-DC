@@ -82,7 +82,9 @@ def refresh():
             return 'Unable to connect to the website'
         # TODO: prevent SQL injection here lol
         for value in myList:
-            labelId = value[-1]
+            if ' ' in value[5]:
+                value[5] = value[5].split(' ')[0]
+            labelId = value[5]
             if value[1] == 'Lunch/Brunch':
                 value[1] = 'Brunch'
             t = (value[0], value[1], value[2], labelId)
@@ -100,6 +102,8 @@ def refresh():
                     raise Exception('Label ID repeated in database')
                 if len(fetched2) == 0:
                     label = scrapeLabel(labelId)
+                    if label is None:
+                        return 'Unable to connect to the website'
                     g.db.execute('INSERT INTO Labels (id, allergens, ' \
                                  'ingredients) VALUES (?, ?, ?)', \
                                  [labelId] + label)
